@@ -5,8 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { ProblemService } from './services/problem.service';
 import { Difficulty } from './models/problem.model';
 
-import { supabase } from './lib/supabase';
-
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -22,50 +20,15 @@ export class AppComponent {
 
   difficulty: Difficulty = 'medium';
 
-  email = '';
-
-  user: any = null;
+  // Temporary development user
+  user = {
+    id: 'dev-user',
+    email: 'dev@algoharvest.local'
+  };
 
   today = new Date()
     .toISOString()
     .split('T')[0];
-
-  async ngOnInit() {
-
-    const {
-      data: { session }
-    } = await supabase.auth.getSession();
-
-    this.user = session?.user ?? null;
-
-    supabase.auth.onAuthStateChange(
-      (_event, session) => {
-
-        this.user = session?.user ?? null;
-      }
-    );
-  }
-
-  async login() {
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email: this.email
-    });
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    alert('Magic link sent!');
-  }
-
-  async logout() {
-
-    await supabase.auth.signOut();
-
-    this.user = null;
-  }
 
   addProblem() {
 
