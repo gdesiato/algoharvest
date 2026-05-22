@@ -12,15 +12,6 @@ export class ProblemService {
 
   private intervals = [1, 3, 7, 14, 30, 60];
 
-  private async getCurrentUser() {
-
-    const {
-        data: { user }
-    } = await supabase.auth.getUser();
-
-    return user;
-  }
-
   problems = signal<Problem[]>([]);
 
   dueProblems = computed(() => {
@@ -38,12 +29,134 @@ export class ProblemService {
   });
 
   constructor() {
-    this.loadProblems();
+    this.initialize();
+  }
+
+  private async initialize() {
+
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    if (session?.user) {
+      await this.loadProblemsFromSupabase();
+    } else {
+      this.loadProblemsFromLocalStorage();
+    }
+  }
+
+  private async getCurrentUser() {
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    return user;
+  }
+
+  async loadProblemsFromSupabase() {
+
+    const user = await this.getCurrentUser();
+
+    if (!user) {
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('problems')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    this.problems.set(
+      data.map(p => ({
+        id: p.id,
+
+        title: p.title,
+
+        difficulty: p.difficulty,
+
+        level: p.level,
+
+        reviewCount: p.review_count,
+
+        nextReview: p.next_review,
+
+        createdAt: p.created_at,
+
+        lastReviewed: p.last_reviewed
+      }))
+    );
   }
 
   async addProblem(title: string, difficulty: Difficulty) {
 
-    const newProblem: Problem = {
+    const user = await this.getCurrentUser();
+
+    const newProblem = {
+      title,
+
+      difficulty,
+
+      level: 0,
+
+      review_count: 0,
+
+      next_review: this.today(),
+
+      created_at: new Date(),
+
+      last_reviewed: null
+    };
+
+    // Logged user -> Supabase
+    if (user) {
+
+      const { data, error } = await supabase
+        .from('problems')
+        .insert({
+          user_id: user.id,
+          ...newProblem
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      this.problems.update(problems => [
+        {
+          id: data.id,
+
+          title: data.title,
+
+          difficulty: data.difficulty,
+
+          level: data.level,
+
+          reviewCount: data.review_count,
+
+          nextReview: data.next_review,
+
+          createdAt: data.created_at,
+
+          lastReviewed: data.last_reviewed
+        },
+        ...problems
+      ]);
+
+      return;
+    }
+
+    // Guest user -> localStorage
+    const localProblem: Problem = {
       id: crypto.randomUUID(),
 
       title,
@@ -58,104 +171,125 @@ export class ProblemService {
 
       createdAt: this.today()
     };
-    const user = await this.getCurrentUser();
-
-    if (!user) {
-    return;
-    }
-
-    const { error } = await supabase
-    .from('problems')
-    .insert({
-        user_id: user.id,
-
-        title: newProblem.title,
-
-        difficulty: newProblem.difficulty,
-
-        level: newProblem.level,
-
-        review_count: newProblem.reviewCount,
-
-        next_review: newProblem.nextReview,
-
-        created_at: new Date(),
-
-        last_reviewed: null
-    });
-
-    if (error) {
-    console.error(error);
-    }
 
     this.problems.update(problems => [
-      newProblem,
+      localProblem,
       ...problems
     ]);
 
-    this.saveProblems();
+    this.saveProblemsToLocalStorage();
   }
 
-  reviewProblem(
+  async reviewProblem(
     problemId: string,
     result: 'remembered' | 'struggled' | 'forgot'
   ) {
 
-    this.problems.update(problems =>
-      problems.map(problem => {
-
-        if (problem.id !== problemId) {
-          return problem;
-        }
-
-        let newLevel = problem.level;
-
-        if (result === 'remembered') {
-          newLevel = Math.min(
-            this.intervals.length - 1,
-            problem.level + 1
-          );
-        }
-
-        if (result === 'struggled') {
-          newLevel = problem.level;
-        }
-
-        if (result === 'forgot') {
-          newLevel = Math.max(0, problem.level - 1);
-        }
-
-        const nextInterval = this.intervals[newLevel];
-
-        return {
-            ...problem,
-
-            level: newLevel,
-
-            reviewCount: problem.reviewCount + 1,
-
-            lastReviewed: this.today(),
-
-            nextReview: this.addDays(nextInterval)
-        };
-      })
+    const current = this.problems().find(
+      p => p.id === problemId
     );
 
-    this.saveProblems();
-  }
+    if (!current) {
+      return;
+    }
 
-  deleteProblem(problemId: string) {
+    let newLevel = current.level;
+
+    if (result === 'remembered') {
+      newLevel = Math.min(
+        this.intervals.length - 1,
+        current.level + 1
+      );
+    }
+
+    if (result === 'forgot') {
+      newLevel = Math.max(
+        0,
+        current.level - 1
+      );
+    }
+
+    const updatedProblem = {
+      ...current,
+
+      level: newLevel,
+
+      reviewCount: current.reviewCount + 1,
+
+      lastReviewed: this.today(),
+
+      nextReview: this.addDays(
+        this.intervals[newLevel]
+      )
+    };
 
     this.problems.update(problems =>
-      problems.filter(p => p.id !== problemId)
+      problems.map(p =>
+        p.id === problemId
+          ? updatedProblem
+          : p
+      )
     );
 
-    this.saveProblems();
+    const user = await this.getCurrentUser();
+
+    if (user) {
+
+      const { error } = await supabase
+        .from('problems')
+        .update({
+          level: updatedProblem.level,
+
+          review_count: updatedProblem.reviewCount,
+
+          last_reviewed: updatedProblem.lastReviewed,
+
+          next_review: updatedProblem.nextReview
+        })
+        .eq('id', problemId);
+
+      if (error) {
+        console.error(error);
+      }
+
+    } else {
+
+      this.saveProblemsToLocalStorage();
+    }
   }
 
-  private loadProblems() {
+  async deleteProblem(problemId: string) {
 
-    const raw = localStorage.getItem(this.STORAGE_KEY);
+    this.problems.update(problems =>
+      problems.filter(
+        p => p.id !== problemId
+      )
+    );
+
+    const user = await this.getCurrentUser();
+
+    if (user) {
+
+      const { error } = await supabase
+        .from('problems')
+        .delete()
+        .eq('id', problemId);
+
+      if (error) {
+        console.error(error);
+      }
+
+    } else {
+
+      this.saveProblemsToLocalStorage();
+    }
+  }
+
+  private loadProblemsFromLocalStorage() {
+
+    const raw = localStorage.getItem(
+      this.STORAGE_KEY
+    );
 
     if (!raw) {
       return;
@@ -169,11 +303,14 @@ export class ProblemService {
 
     } catch (err) {
 
-      console.error('Failed to load problems', err);
+      console.error(
+        'Failed to load problems',
+        err
+      );
     }
   }
 
-  private saveProblems() {
+  private saveProblemsToLocalStorage() {
 
     localStorage.setItem(
       this.STORAGE_KEY,
@@ -192,7 +329,9 @@ export class ProblemService {
 
     const date = new Date();
 
-    date.setDate(date.getDate() + days);
+    date.setDate(
+      date.getDate() + days
+    );
 
     return date
       .toISOString()
