@@ -39,4 +39,34 @@ export class AppComponent {
 
     this.difficulty = 'medium';
   }
+
+  formatReviewDate(dateString: string): string {
+
+  const today = new Date();
+
+  const target = new Date(dateString);
+
+  const diffMs =
+    target.getTime() - today.getTime();
+
+  const diffDays = Math.ceil(
+    diffMs / (1000 * 60 * 60 * 24)
+  );
+
+  if (diffDays <= 0) {
+    return 'Today';
+  }
+
+  if (diffDays === 1) {
+    return 'Tomorrow';
+  }
+
+  if (diffDays < 7) {
+    return `In ${diffDays} days`;
+  }
+
+  const weeks = Math.floor(diffDays / 7);
+
+  return `In ${weeks} week${weeks > 1 ? 's' : ''}`;
+}
 }

@@ -88,13 +88,15 @@ export class ProblemService {
         const nextInterval = this.intervals[newLevel];
 
         return {
-          ...problem,
+            ...problem,
 
-          level: newLevel,
+            level: newLevel,
 
-          reviewCount: problem.reviewCount + 1,
+            reviewCount: problem.reviewCount + 1,
 
-          nextReview: this.addDays(nextInterval)
+            lastReviewed: this.today(),
+
+            nextReview: this.addDays(nextInterval)
         };
       })
     );

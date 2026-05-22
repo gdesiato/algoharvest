@@ -78,7 +78,7 @@
       @if (problemService.dueProblems().length === 0) {
 
         <div class="rounded-3xl border border-neutral-200 bg-white p-10 text-center text-neutral-500 shadow-sm">
-          No problems yet 🌿
+          Nothing to harvest today 🌿
         </div>
 
       } @else {
@@ -103,7 +103,19 @@
                     level {{ problem.level }}
                     ·
                     review #{{ problem.reviewCount }}
+                    @if (problem.lastReviewed) {
+                      <p class="mt-1 text-xs text-neutral-400">
+                        Last reviewed:
+                        {{ formatReviewDate(problem.lastReviewed) }}
+                      </p>
+                    }
                   </p>
+                  <div class="mt-4 h-2 overflow-hidden rounded-full bg-neutral-100">
+                    <div
+                      class="h-full rounded-full bg-green-500 transition-all"
+                      [style.width.%]="(problem.level + 1) * 16"
+                    ></div>
+                  </div>
 
                 </div>
 
@@ -138,7 +150,7 @@
 
                 <p class="text-sm text-neutral-500">
                   Next review:
-                  {{ problem.nextReview }}
+                  {{ formatReviewDate(problem.nextReview) }}
                 </p>
 
                 <button
@@ -190,7 +202,7 @@
 
               <p class="mt-1 text-sm text-neutral-500">
                 next review:
-                {{ problem.nextReview }}
+                {{ formatReviewDate(problem.nextReview) }}
               </p>
 
             </div>

@@ -14,4 +14,6 @@ export interface Problem {
   reviewCount: number;
 
   createdAt: string;
+
+  lastReviewed?: string;
 }
