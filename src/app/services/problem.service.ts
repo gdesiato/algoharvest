@@ -1,6 +1,8 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Problem, Difficulty } from '../models/problem.model';
 
+import { supabase } from '../lib/supabase';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -9,6 +11,15 @@ export class ProblemService {
   private STORAGE_KEY = 'algo-harvest-problems';
 
   private intervals = [1, 3, 7, 14, 30, 60];
+
+  private async getCurrentUser() {
+
+    const {
+        data: { user }
+    } = await supabase.auth.getUser();
+
+    return user;
+  }
 
   problems = signal<Problem[]>([]);
 
@@ -30,7 +41,7 @@ export class ProblemService {
     this.loadProblems();
   }
 
-  addProblem(title: string, difficulty: Difficulty) {
+  async addProblem(title: string, difficulty: Difficulty) {
 
     const newProblem: Problem = {
       id: crypto.randomUUID(),
@@ -47,6 +58,35 @@ export class ProblemService {
 
       createdAt: this.today()
     };
+    const user = await this.getCurrentUser();
+
+    if (!user) {
+    return;
+    }
+
+    const { error } = await supabase
+    .from('problems')
+    .insert({
+        user_id: user.id,
+
+        title: newProblem.title,
+
+        difficulty: newProblem.difficulty,
+
+        level: newProblem.level,
+
+        review_count: newProblem.reviewCount,
+
+        next_review: newProblem.nextReview,
+
+        created_at: new Date(),
+
+        last_reviewed: null
+    });
+
+    if (error) {
+    console.error(error);
+    }
 
     this.problems.update(problems => [
       newProblem,
