@@ -1,21 +1,33 @@
 <div class="min-h-screen bg-neutral-50 text-neutral-900">
+
   <div class="mx-auto max-w-5xl p-6">
 
     <header class="mb-8 flex items-center justify-between">
+
       <div>
-        <h1 class="text-3xl font-bold">🌱 Algo Harvest</h1>
+        <h1 class="text-3xl font-bold">
+          🌱 Algo Harvest
+        </h1>
+
         <p class="mt-1 text-sm text-neutral-500">
           Your long-term algorithm memory system
         </p>
       </div>
 
-      <div class="rounded-2xl border bg-white px-4 py-2 shadow-sm">
-        <p class="text-sm text-neutral-500">Problems mastered</p>
-        <p class="text-2xl font-semibold">0</p>
+      <div class="rounded-3xl border border-neutral-200 bg-white px-5 py-4 shadow-sm">
+        <p class="text-sm text-neutral-500">
+          Problems mastered
+        </p>
+
+        <p class="text-2xl font-semibold">
+          {{ problemService.masteredCount() }}
+        </p>
       </div>
+
     </header>
 
-    <section class="mb-8 rounded-3xl border bg-white p-6 shadow-sm">
+    <section class="mb-8 rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+
       <h2 class="mb-4 text-lg font-semibold">
         Add solved problem
       </h2>
@@ -23,43 +35,178 @@
       <div class="flex flex-col gap-4 md:flex-row">
 
         <input
+          [(ngModel)]="title"
           type="text"
           placeholder="e.g. Two Sum"
-          class="flex-1 rounded-2xl border px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-300"
+          class="flex-1 rounded-2xl border border-neutral-200 px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-300"
         />
 
         <select
-          class="rounded-2xl border px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-300"
+          [(ngModel)]="difficulty"
+          class="rounded-2xl border border-neutral-200 px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-300"
         >
-          <option>Easy</option>
-          <option selected>Medium</option>
-          <option>Hard</option>
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
         </select>
 
         <button
+          (click)="addProblem()"
           class="rounded-2xl bg-black px-6 py-3 font-medium text-white transition hover:opacity-90"
         >
           Add
         </button>
 
       </div>
+
     </section>
 
     <section>
+
       <div class="mb-4 flex items-center justify-between">
+
         <h2 class="text-lg font-semibold">
           Ready to harvest
         </h2>
 
         <span class="rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-700">
-          0 due
+          {{ problemService.dueProblems().length }} due
         </span>
+
       </div>
 
-      <div class="rounded-3xl border bg-white p-10 text-center text-neutral-500 shadow-sm">
-        No problems yet 🌿
-      </div>
+      @if (problemService.dueProblems().length === 0) {
+
+        <div class="rounded-3xl border border-neutral-200 bg-white p-10 text-center text-neutral-500 shadow-sm">
+          No problems yet 🌿
+        </div>
+
+      } @else {
+
+        <div class="space-y-4">
+
+          @for (problem of problemService.dueProblems(); track problem.id) {
+
+            <div class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+
+              <div class="flex items-center justify-between">
+
+                <div>
+
+                  <h3 class="text-lg font-semibold">
+                    {{ problem.title }}
+                  </h3>
+
+                  <p class="mt-1 text-sm text-neutral-500">
+                    {{ problem.difficulty }}
+                    ·
+                    level {{ problem.level }}
+                    ·
+                    review #{{ problem.reviewCount }}
+                  </p>
+
+                </div>
+
+                <div class="flex gap-2">
+
+                  <button
+                    (click)="problemService.reviewProblem(problem.id, 'remembered')"
+                    class="rounded-xl bg-green-100 px-4 py-2 text-sm font-medium text-green-700 transition hover:bg-green-200"
+                  >
+                    Easy
+                  </button>
+
+                  <button
+                    (click)="problemService.reviewProblem(problem.id, 'struggled')"
+                    class="rounded-xl bg-yellow-100 px-4 py-2 text-sm font-medium text-yellow-700 transition hover:bg-yellow-200"
+                  >
+                    Medium
+                  </button>
+
+                  <button
+                    (click)="problemService.reviewProblem(problem.id, 'forgot')"
+                    class="rounded-xl bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-200"
+                  >
+                    Hard
+                  </button>
+
+                </div>
+
+              </div>
+
+              <div class="mt-4 flex items-center justify-between">
+
+                <p class="text-sm text-neutral-500">
+                  Next review:
+                  {{ problem.nextReview }}
+                </p>
+
+                <button
+                  (click)="problemService.deleteProblem(problem.id)"
+                  class="text-sm text-neutral-400 transition hover:text-red-500"
+                >
+                  Delete
+                </button>
+
+              </div>
+
+            </div>
+
+          }
+
+        </div>
+
+      }
+
     </section>
+    <section class="mt-10">
+
+  <div class="mb-4 flex items-center justify-between">
+
+    <h2 class="text-lg font-semibold">
+      Upcoming reviews
+    </h2>
 
   </div>
+
+  <div class="space-y-4">
+
+    @for (
+      problem of problemService.problems();
+      track problem.id
+    ) {
+
+      @if (problem.nextReview > today) {
+
+        <div class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+
+          <div class="flex items-center justify-between">
+
+            <div>
+
+              <h3 class="text-lg font-semibold">
+                {{ problem.title }}
+              </h3>
+
+              <p class="mt-1 text-sm text-neutral-500">
+                next review:
+                {{ problem.nextReview }}
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      }
+
+    }
+
+  </div>
+
+</section>
+
+  </div>
+
 </div>
