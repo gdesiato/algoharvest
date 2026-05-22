@@ -45,9 +45,9 @@
           [(ngModel)]="difficulty"
           class="rounded-2xl border border-neutral-200 px-4 py-3 outline-none focus:ring-2 focus:ring-neutral-300"
         >
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
+          <option value="remembered">Remembered</option>
+          <option value="struggled">Struggled</option>
+          <option value="forgot">Forgot</option>
         </select>
 
         <button
@@ -113,21 +113,21 @@
                     (click)="problemService.reviewProblem(problem.id, 'remembered')"
                     class="rounded-xl bg-green-100 px-4 py-2 text-sm font-medium text-green-700 transition hover:bg-green-200"
                   >
-                    Easy
+                    Remembered
                   </button>
 
                   <button
                     (click)="problemService.reviewProblem(problem.id, 'struggled')"
                     class="rounded-xl bg-yellow-100 px-4 py-2 text-sm font-medium text-yellow-700 transition hover:bg-yellow-200"
                   >
-                    Medium
+                    Struggled
                   </button>
 
                   <button
                     (click)="problemService.reviewProblem(problem.id, 'forgot')"
                     class="rounded-xl bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-200"
                   >
-                    Hard
+                    Forgot
                   </button>
 
                 </div>
