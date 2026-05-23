@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ProblemService } from './services/problem.service';
 import { Difficulty } from './models/problem.model';
 
+import { supabase } from './lib/supabase';
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -17,14 +19,12 @@ export class AppComponent {
   problemService = inject(ProblemService);
 
   title = '';
+  password = '';
+  email = '';
+
+  user: any = null;
 
   difficulty: Difficulty = 'medium';
-
-  // Temporary development user
-  user = {
-    id: 'dev-user',
-    email: 'dev@algoharvest.local'
-  };
 
   today = new Date()
     .toISOString()
@@ -74,5 +74,53 @@ export class AppComponent {
     const weeks = Math.floor(diffDays / 7);
 
     return `In ${weeks} week${weeks > 1 ? 's' : ''}`;
+  }
+
+  async ngOnInit() {
+
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    this.user = session?.user ?? null;
+
+    supabase.auth.onAuthStateChange(
+      (_event, session) => {
+
+        this.user = session?.user ?? null;
+      }
+    );
+  }
+
+  async signUp() {
+
+    const { error } = await supabase.auth.signUp({
+      email: this.email,
+      password: this.password
+    });
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
+    }
+
+    alert('Account created!');
+  }
+
+  async login() {
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: this.email,
+      password: this.password
+    });
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
+    }
+
+    alert('Logged in!');
   }
 }

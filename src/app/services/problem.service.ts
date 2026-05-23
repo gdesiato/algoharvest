@@ -47,11 +47,9 @@ export class ProblemService {
 
   private async getCurrentUser() {
 
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-
-    return user;
+    return {
+      id: 'dev-user'
+    };
   }
 
   async loadProblemsFromSupabase() {
@@ -123,8 +121,12 @@ export class ProblemService {
           user_id: user.id,
           ...newProblem
         })
+
         .select()
         .single();
+
+      console.log(data);
+      console.log(error);
 
       if (error) {
         console.error(error);
