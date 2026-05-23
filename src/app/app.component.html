@@ -1,4 +1,5 @@
 <div class="min-h-screen bg-neutral-50 text-neutral-900">
+  @if (!authLoading) {
 
   <div class="mx-auto max-w-5xl p-6">
 
@@ -226,54 +227,55 @@
       }
 
     </section>
-    <section class="mt-10">
+      <section class="mt-10">
 
-  <div class="mb-4 flex items-center justify-between">
+        <div class="mb-4 flex items-center justify-between">
 
-    <h2 class="text-lg font-semibold">
-      Upcoming reviews
-    </h2>
-
-  </div>
-
-  <div class="space-y-4">
-
-    @for (
-      problem of problemService.problems();
-      track problem.id
-    ) {
-
-      @if (problem.nextReview > today) {
-
-        <div class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
-
-          <div class="flex items-center justify-between">
-
-            <div>
-
-              <h3 class="text-lg font-semibold">
-                {{ problem.title }}
-              </h3>
-
-              <p class="mt-1 text-sm text-neutral-500">
-                next review:
-                {{ formatReviewDate(problem.nextReview) }}
-              </p>
-
-            </div>
-
-          </div>
+          <h2 class="text-lg font-semibold">
+            Upcoming reviews
+          </h2>
 
         </div>
 
-      }
+        <div class="space-y-4">
 
-    }
+          @for (
+            problem of problemService.problems();
+            track problem.id
+          ) {
+
+            @if (problem.nextReview > today) {
+
+              <div class="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+
+                <div class="flex items-center justify-between">
+
+                  <div>
+
+                    <h3 class="text-lg font-semibold">
+                      {{ problem.title }}
+                    </h3>
+
+                    <p class="mt-1 text-sm text-neutral-500">
+                      next review:
+                      {{ formatReviewDate(problem.nextReview) }}
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            }
+
+          }
+
+        </div>
+
+    </section>
 
   </div>
-
-</section>
-
-  </div>
+  }
 
 </div>

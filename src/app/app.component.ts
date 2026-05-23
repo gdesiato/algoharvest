@@ -21,6 +21,7 @@ export class AppComponent {
   title = '';
   password = '';
   email = '';
+  authLoading = true;
 
   user: any = null;
 
@@ -86,6 +87,8 @@ export class AppComponent {
     } = await supabase.auth.getSession();
 
     this.user = session?.user ?? null;
+
+    this.authLoading = false;
 
     supabase.auth.onAuthStateChange(
       async (_event, session) => {
