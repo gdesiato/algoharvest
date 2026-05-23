@@ -85,9 +85,15 @@ export class AppComponent {
     this.user = session?.user ?? null;
 
     supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
 
         this.user = session?.user ?? null;
+
+        if (session?.user) {
+          await this.problemService.loadProblemsFromSupabase();
+        } else {
+          this.problemService.problems.set([]);
+        }
       }
     );
   }
@@ -101,6 +107,7 @@ export class AppComponent {
 
     if (error) {
       console.error(error);
+      alert(JSON.stringify(error));
       alert(error.message);
       return;
     }
@@ -117,6 +124,7 @@ export class AppComponent {
 
     if (error) {
       console.error(error);
+      alert(JSON.stringify(error));
       alert(error.message);
       return;
     }
