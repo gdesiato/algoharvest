@@ -8,8 +8,6 @@ import { supabase } from '../lib/supabase';
 })
 export class ProblemService {
 
-  private STORAGE_KEY = 'algo-harvest-problems';
-
   private intervals = [1, 3, 7, 14, 30, 60];
 
   problems = signal<Problem[]>([]);
@@ -41,15 +39,8 @@ export class ProblemService {
     if (session?.user) {
       await this.loadProblemsFromSupabase();
     } else {
-      this.loadProblemsFromLocalStorage();
+      this.problems.set([]);
     }
-  }
-
-  private async getCurrentUser() {
-
-    return {
-      id: 'dev-user'
-    };
   }
 
   async loadProblemsFromSupabase() {
@@ -156,30 +147,6 @@ export class ProblemService {
 
       return;
     }
-
-    // Guest user -> localStorage
-    const localProblem: Problem = {
-      id: crypto.randomUUID(),
-
-      title,
-
-      difficulty,
-
-      level: 0,
-
-      nextReview: this.today(),
-
-      reviewCount: 0,
-
-      createdAt: this.today()
-    };
-
-    this.problems.update(problems => [
-      localProblem,
-      ...problems
-    ]);
-
-    this.saveProblemsToLocalStorage();
   }
 
   async reviewProblem(
@@ -253,10 +220,6 @@ export class ProblemService {
       if (error) {
         console.error(error);
       }
-
-    } else {
-
-      this.saveProblemsToLocalStorage();
     }
   }
 
@@ -280,44 +243,7 @@ export class ProblemService {
       if (error) {
         console.error(error);
       }
-
-    } else {
-
-      this.saveProblemsToLocalStorage();
     }
-  }
-
-  private loadProblemsFromLocalStorage() {
-
-    const raw = localStorage.getItem(
-      this.STORAGE_KEY
-    );
-
-    if (!raw) {
-      return;
-    }
-
-    try {
-
-      const parsed = JSON.parse(raw);
-
-      this.problems.set(parsed);
-
-    } catch (err) {
-
-      console.error(
-        'Failed to load problems',
-        err
-      );
-    }
-  }
-
-  private saveProblemsToLocalStorage() {
-
-    localStorage.setItem(
-      this.STORAGE_KEY,
-      JSON.stringify(this.problems())
-    );
   }
 
   private today(): string {
@@ -338,5 +264,14 @@ export class ProblemService {
     return date
       .toISOString()
       .split('T')[0];
+  }
+
+  private async getCurrentUser() {
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    return user;
   }
 }

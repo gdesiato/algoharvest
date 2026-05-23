@@ -123,4 +123,11 @@ export class AppComponent {
 
     alert('Logged in!');
   }
+
+  async logout() {
+
+    await supabase.auth.signOut();
+
+    this.user = null;
+  }
 }
