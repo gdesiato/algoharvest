@@ -26,9 +26,12 @@ export class AppComponent {
 
   difficulty: Difficulty = 'medium';
 
-  today = new Date()
+  get today(): string {
+
+  return new Date()
     .toISOString()
     .split('T')[0];
+}
 
   addProblem() {
 
