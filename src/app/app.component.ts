@@ -37,6 +37,7 @@ export class AppComponent {
   addProblem() {
 
     if (!this.title.trim()) {
+      alert('Please enter a problem title');
       return;
     }
 

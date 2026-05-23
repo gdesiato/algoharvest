@@ -84,11 +84,21 @@ export class ProblemService {
   }
 
   async addProblem(title: string, difficulty: Difficulty) {
+    const normalizedTitle = title.trim().toLowerCase();
+
+    const alreadyExists = this.problems().some(
+      p => p.title.trim().toLowerCase() === normalizedTitle
+    );
+
+    if (alreadyExists) {
+      alert('Problem already added');
+      return;
+    }
 
     const user = await this.getCurrentUser();
 
     const newProblem = {
-      title,
+      title: title.trim(),
 
       difficulty,
 
