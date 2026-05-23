@@ -114,9 +114,22 @@ export class AppComponent {
 
     if (error) {
       console.error(error);
-      alert(JSON.stringify(error));
       alert(error.message);
       return;
+    }
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (user) {
+
+      await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email
+        });
     }
 
     alert('Account created!');
