@@ -106,7 +106,7 @@ export class ProblemService {
 
       review_count: 0,
 
-      next_review: this.today(),
+      next_review: this.addDays(1),
 
       created_at: new Date(),
 
