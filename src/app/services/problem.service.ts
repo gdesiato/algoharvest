@@ -134,26 +134,7 @@ export class ProblemService {
         return;
       }
 
-      this.problems.update(problems => [
-        {
-          id: data.id,
-
-          title: data.title,
-
-          difficulty: data.difficulty,
-
-          level: data.level,
-
-          reviewCount: data.review_count,
-
-          nextReview: data.next_review,
-
-          createdAt: data.created_at,
-
-          lastReviewed: data.last_reviewed
-        },
-        ...problems
-      ]);
+      await this.loadProblemsFromSupabase();
 
       return;
     }
@@ -202,14 +183,6 @@ export class ProblemService {
       )
     };
 
-    this.problems.update(problems =>
-      problems.map(p =>
-        p.id === problemId
-          ? updatedProblem
-          : p
-      )
-    );
-
     const user = await this.getCurrentUser();
 
     if (user) {
@@ -229,17 +202,14 @@ export class ProblemService {
 
       if (error) {
         console.error(error);
+        return;
       }
+
+      await this.loadProblemsFromSupabase();
     }
   }
 
   async deleteProblem(problemId: string) {
-
-    this.problems.update(problems =>
-      problems.filter(
-        p => p.id !== problemId
-      )
-    );
 
     const user = await this.getCurrentUser();
 
@@ -252,7 +222,10 @@ export class ProblemService {
 
       if (error) {
         console.error(error);
+        return;
       }
+
+      await this.loadProblemsFromSupabase();
     }
   }
 
