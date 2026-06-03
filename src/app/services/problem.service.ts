@@ -28,6 +28,17 @@ export class ProblemService {
 
   constructor() {
     this.initialize();
+
+    supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+
+        if (session?.user) {
+          await this.loadProblemsFromSupabase();
+        } else {
+          this.problems.set([]);
+        }
+      }
+    );
   }
 
   private async initialize() {
