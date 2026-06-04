@@ -8,6 +8,14 @@ import { supabase } from '../lib/supabase';
 })
 export class ProblemService {
 
+  private currentUser: any = null;
+
+  public setCurrentUser(user: any) {
+
+    console.log('SETTING USER', user);
+    this.currentUser = user;
+  }
+
   private intervals = [1, 3, 7, 14, 30, 60];
 
   problems = signal<Problem[]>([]);
@@ -46,6 +54,8 @@ export class ProblemService {
     const {
       data: { session }
     } = await supabase.auth.getSession();
+
+    this.currentUser = session?.user ?? null;
 
     if (session?.user) {
       await this.loadProblemsFromSupabase();
@@ -262,10 +272,8 @@ export class ProblemService {
 
   private async getCurrentUser() {
 
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-
-    return user;
+    console.log('CURRENT USER', this.currentUser);
+    return this.currentUser;
   }
+
 }

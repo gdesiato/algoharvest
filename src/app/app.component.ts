@@ -91,6 +91,10 @@ export class AppComponent {
 
     this.user = session?.user ?? null;
 
+    this.problemService.setCurrentUser(
+      session?.user ?? null
+    );
+
     if (session?.user) {
       await this.problemService.loadProblemsFromSupabase();
     }
@@ -101,6 +105,10 @@ export class AppComponent {
       async (_event, session) => {
 
         this.user = session?.user ?? null;
+
+        this.problemService.setCurrentUser(
+          session?.user ?? null
+        );
 
         if (session?.user) {
           await this.problemService.loadProblemsFromSupabase();
