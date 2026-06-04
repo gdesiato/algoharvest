@@ -83,11 +83,17 @@ export class AppComponent {
 
   async ngOnInit() {
 
+    this.authLoading = true;
+
     const {
       data: { session }
     } = await supabase.auth.getSession();
 
     this.user = session?.user ?? null;
+
+    if (session?.user) {
+      await this.problemService.loadProblemsFromSupabase();
+    }
 
     this.authLoading = false;
 
