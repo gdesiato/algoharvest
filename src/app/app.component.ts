@@ -168,8 +168,15 @@ export class AppComponent {
 
   async logout() {
 
-    await supabase.auth.signOut();
+    console.log('LOGOUT START');
 
-    this.user = null;
+    const result = await Promise.race([
+      supabase.auth.signOut(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject('LOGOUT TIMEOUT'), 5000)
+      )
+    ]);
+
+    console.log(result);
   }
 }
