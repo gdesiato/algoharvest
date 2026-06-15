@@ -66,17 +66,29 @@ export class ProblemService {
 
   async loadProblemsFromSupabase() {
 
+    console.log('LOAD START');
+
     const user = await this.getCurrentUser();
 
+    console.log('LOAD USER', user);
+
     if (!user) {
+      console.log('NO USER');
       return;
     }
+
+    console.log('BEFORE SELECT');
 
     const { data, error } = await supabase
       .from('problems')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
+
+    console.log('AFTER SELECT');
+
+    console.log('LOAD DATA', data);
+    console.log('LOAD ERROR', error);
 
     if (error) {
       console.error(error);
@@ -102,14 +114,24 @@ export class ProblemService {
         lastReviewed: p.last_reviewed
       }))
     );
+
+    console.log(
+      'PROBLEMS UPDATED',
+      this.problems().length
+    );
   }
 
   async addProblem(title: string, difficulty: Difficulty) {
+
+    console.log('ADD START');
+
     const normalizedTitle = title.trim().toLowerCase();
 
     const alreadyExists = this.problems().some(
       p => p.title.trim().toLowerCase() === normalizedTitle
     );
+
+    console.log('ALREADY EXISTS', alreadyExists);
 
     if (alreadyExists) {
       alert('Problem already added');
@@ -117,6 +139,8 @@ export class ProblemService {
     }
 
     const user = await this.getCurrentUser();
+
+    console.log('ADD USER', user);
 
     const newProblem = {
       title: title.trim(),
@@ -134,31 +158,53 @@ export class ProblemService {
       last_reviewed: null
     };
 
+    console.log('NEW PROBLEM', newProblem);
+
     // Logged user -> Supabase
     if (user) {
 
-      const { data, error } = await supabase
-        .from('problems')
-        .insert({
-          user_id: user.id,
-          ...newProblem
-        })
+      console.log('BEFORE INSERT');
 
-        .select()
-        .single();
+      try {
 
-      console.log(data);
-      console.log(error);
+        const result = await Promise.race([
 
-      if (error) {
-        console.error(error);
+          supabase
+            .from('problems')
+            .insert({
+              user_id: user.id,
+              ...newProblem
+            })
+            .select()
+            .single(),
+
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject('INSERT TIMEOUT'),
+              5000
+            )
+          )
+
+        ]);
+
+        console.log('AFTER INSERT', result);
+
+      } catch (e) {
+
+        console.error('INSERT FAILED', e);
         return;
       }
 
+      console.log('BEFORE RELOAD');
+
       await this.loadProblemsFromSupabase();
+
+      console.log('AFTER RELOAD');
 
       return;
     }
+
+    console.log('NO USER');
   }
 
   async reviewProblem(
@@ -166,11 +212,16 @@ export class ProblemService {
     result: 'remembered' | 'struggled' | 'forgot'
   ) {
 
+    console.log('REVIEW CLICKED', problemId, result);
+
     const current = this.problems().find(
       p => p.id === problemId
     );
 
+    console.log('CURRENT', current);
+
     if (!current) {
+      console.log('CURRENT IS NULL');
       return;
     }
 
@@ -192,13 +243,9 @@ export class ProblemService {
 
     const updatedProblem = {
       ...current,
-
       level: newLevel,
-
       reviewCount: current.reviewCount + 1,
-
       lastReviewed: this.today(),
-
       nextReview: this.addDays(
         this.intervals[newLevel]
       )
@@ -206,27 +253,34 @@ export class ProblemService {
 
     const user = await this.getCurrentUser();
 
+    console.log('USER', user);
+
     if (user) {
+
+      console.log('BEFORE UPDATE');
 
       const { error } = await supabase
         .from('problems')
         .update({
           level: updatedProblem.level,
-
           review_count: updatedProblem.reviewCount,
-
           last_reviewed: updatedProblem.lastReviewed,
-
           next_review: updatedProblem.nextReview
         })
         .eq('id', problemId);
+
+      console.log('AFTER UPDATE', error);
 
       if (error) {
         console.error(error);
         return;
       }
 
+      console.log('BEFORE RELOAD');
+
       await this.loadProblemsFromSupabase();
+
+      console.log('AFTER RELOAD');
     }
   }
 
