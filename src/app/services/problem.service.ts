@@ -230,90 +230,91 @@ export class ProblemService {
 
     console.log('REVIEW LOCK ACQUIRED');
 
-    const current = this.problems().find(
-      p => p.id === problemId
-    );
+    try {
 
-    console.log('CURRENT', current);
-
-    if (!current) {
-      console.log('CURRENT IS NULL');
-
-      this.reviewInProgress = false;
-      return;
-    }
-
-    let newLevel = current.level;
-
-    if (result === 'remembered') {
-      newLevel = Math.min(
-        this.intervals.length - 1,
-        current.level + 1
+      const current = this.problems().find(
+        p => p.id === problemId
       );
-    }
 
-    if (result === 'forgot') {
-      newLevel = Math.max(
-        0,
-        current.level - 1
-      );
-    }
+      console.log('CURRENT', current);
 
-    const updatedProblem = {
-      ...current,
-      level: newLevel,
-      reviewCount: current.reviewCount + 1,
-      lastReviewed: this.today(),
-      nextReview: this.addDays(
-        this.intervals[newLevel]
-      )
-    };
-
-    const user = await this.getCurrentUser();
-
-    console.log('USER', user);
-
-    if (user) {
-
-      console.log('UPDATED PROBLEM', updatedProblem);
-
-      console.log('BEFORE UPDATE');
-
-      console.log('STARTING UPDATE REQUEST');
-
-      console.log('PROBLEM ID TYPE', typeof problemId);
-      console.log('PROBLEM ID VALUE', problemId);
-
-      console.log('BEFORE QUERY TIMESTAMP', Date.now());
-
-      const { error } = await supabase
-        .from('problems')
-        .update({
-          level: updatedProblem.level,
-          review_count: updatedProblem.reviewCount,
-          last_reviewed: updatedProblem.lastReviewed,
-          next_review: updatedProblem.nextReview
-        })
-        .eq('id', problemId);
-        
-      console.log('AFTER QUERY TIMESTAMP', Date.now());
-
-      console.log('UPDATE REQUEST FINISHED');
-
-      console.log('AFTER UPDATE', error);
-
-      if (error) {
-        console.error(error);
-
-        this.reviewInProgress = false;
+      if (!current) {
+        console.log('CURRENT IS NULL');
         return;
       }
 
-      console.log('BEFORE RELOAD');
+      let newLevel = current.level;
 
-      await this.loadProblemsFromSupabase();
+      if (result === 'remembered') {
+        newLevel = Math.min(
+          this.intervals.length - 1,
+          current.level + 1
+        );
+      }
 
-      console.log('AFTER RELOAD');
+      if (result === 'forgot') {
+        newLevel = Math.max(
+          0,
+          current.level - 1
+        );
+      }
+
+      const updatedProblem = {
+        ...current,
+        level: newLevel,
+        reviewCount: current.reviewCount + 1,
+        lastReviewed: this.today(),
+        nextReview: this.addDays(
+          this.intervals[newLevel]
+        )
+      };
+
+      const user = await this.getCurrentUser();
+
+      console.log('USER', user);
+
+      if (user) {
+
+        console.log('UPDATED PROBLEM', updatedProblem);
+
+        console.log('BEFORE UPDATE');
+
+        console.log('STARTING UPDATE REQUEST');
+
+        console.log('PROBLEM ID TYPE', typeof problemId);
+        console.log('PROBLEM ID VALUE', problemId);
+
+        console.log('BEFORE QUERY TIMESTAMP', Date.now());
+
+        const { error } = await supabase
+          .from('problems')
+          .update({
+            level: updatedProblem.level,
+            review_count: updatedProblem.reviewCount,
+            last_reviewed: updatedProblem.lastReviewed,
+            next_review: updatedProblem.nextReview
+          })
+          .eq('id', problemId);
+          
+        console.log('AFTER QUERY TIMESTAMP', Date.now());
+
+        console.log('UPDATE REQUEST FINISHED');
+
+        console.log('AFTER UPDATE', error);
+
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+        console.log('BEFORE RELOAD');
+
+        await this.loadProblemsFromSupabase();
+
+        console.log('AFTER RELOAD');
+      }
+
+    } finally {
 
       this.reviewInProgress = false;
       console.log('REVIEW LOCK RELEASED');
