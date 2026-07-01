@@ -102,7 +102,7 @@ export class AppComponent {
     this.authLoading = false;
 
     supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
 
         this.user = session?.user ?? null;
 
@@ -110,11 +110,7 @@ export class AppComponent {
           session?.user ?? null
         );
 
-        if (session?.user) {
-          await this.problemService.loadProblemsFromSupabase();
-        } else {
-          this.problemService.problems.set([]);
-        }
+        console.log('APP AUTH EVENT');
       }
     );
   }
@@ -178,5 +174,18 @@ export class AppComponent {
     ]);
 
     console.log(result);
+  }
+
+
+  async testRemembered(problemId: string) {
+
+    console.log('BUTTON CLICKED');
+
+    await this.problemService.reviewProblem(
+      problemId,
+      'remembered'
+    );
+
+    console.log('BUTTON FINISHED');
   }
 }

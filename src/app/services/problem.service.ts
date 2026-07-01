@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 export class ProblemService {
 
   private currentUser: any = null;
+  private reviewInProgress = false;
 
   public setCurrentUser(user: any) {
 
@@ -88,6 +89,19 @@ export class ProblemService {
     console.log('AFTER SELECT');
 
     console.log('LOAD DATA', data);
+
+    if (data) {
+
+      const validAnagram = data.find(
+        p => p.title === 'Valid Anagram'
+      );
+
+      console.log(
+        'VALID ANAGRAM FROM DB',
+        validAnagram
+      );
+    }
+
     console.log('LOAD ERROR', error);
 
     if (error) {
@@ -98,19 +112,12 @@ export class ProblemService {
     this.problems.set(
       data.map(p => ({
         id: p.id,
-
         title: p.title,
-
         difficulty: p.difficulty,
-
         level: p.level,
-
         reviewCount: p.review_count,
-
         nextReview: p.next_review,
-
         createdAt: p.created_at,
-
         lastReviewed: p.last_reviewed
       }))
     );
@@ -214,6 +221,15 @@ export class ProblemService {
 
     console.log('REVIEW CLICKED', problemId, result);
 
+    if (this.reviewInProgress) {
+      console.log('REVIEW ALREADY RUNNING');
+      return;
+    }
+
+    this.reviewInProgress = true;
+
+    console.log('REVIEW LOCK ACQUIRED');
+
     const current = this.problems().find(
       p => p.id === problemId
     );
@@ -222,6 +238,8 @@ export class ProblemService {
 
     if (!current) {
       console.log('CURRENT IS NULL');
+
+      this.reviewInProgress = false;
       return;
     }
 
@@ -257,7 +275,16 @@ export class ProblemService {
 
     if (user) {
 
+      console.log('UPDATED PROBLEM', updatedProblem);
+
       console.log('BEFORE UPDATE');
+
+      console.log('STARTING UPDATE REQUEST');
+
+      console.log('PROBLEM ID TYPE', typeof problemId);
+      console.log('PROBLEM ID VALUE', problemId);
+
+      console.log('BEFORE QUERY TIMESTAMP', Date.now());
 
       const { error } = await supabase
         .from('problems')
@@ -268,11 +295,17 @@ export class ProblemService {
           next_review: updatedProblem.nextReview
         })
         .eq('id', problemId);
+        
+      console.log('AFTER QUERY TIMESTAMP', Date.now());
+
+      console.log('UPDATE REQUEST FINISHED');
 
       console.log('AFTER UPDATE', error);
 
       if (error) {
         console.error(error);
+
+        this.reviewInProgress = false;
         return;
       }
 
@@ -281,6 +314,9 @@ export class ProblemService {
       await this.loadProblemsFromSupabase();
 
       console.log('AFTER RELOAD');
+
+      this.reviewInProgress = false;
+      console.log('REVIEW LOCK RELEASED');
     }
   }
 
