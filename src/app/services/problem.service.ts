@@ -286,21 +286,47 @@ export class ProblemService {
 
         console.log('BEFORE QUERY TIMESTAMP', Date.now());
 
-        const { error } = await supabase
-          .from('problems')
-          .update({
-            level: updatedProblem.level,
-            review_count: updatedProblem.reviewCount,
-            last_reviewed: updatedProblem.lastReviewed,
-            next_review: updatedProblem.nextReview
-          })
-          .eq('id', problemId);
-          
-        console.log('AFTER QUERY TIMESTAMP', Date.now());
+        
+        
+        
+        let error = null;
 
-        console.log('UPDATE REQUEST FINISHED');
+        try {
+
+          console.log('BEFORE QUERY TIMESTAMP', Date.now());
+
+          const result = await supabase
+            .from('problems')
+            .update({
+              level: updatedProblem.level,
+              review_count: updatedProblem.reviewCount,
+              last_reviewed: updatedProblem.lastReviewed,
+              next_review: updatedProblem.nextReview
+            })
+            .eq('id', problemId);
+
+          console.log('AFTER QUERY TIMESTAMP', Date.now());
+
+          console.log('UPDATE REQUEST FINISHED');
+
+          console.log('FULL RESULT', result);
+
+          error = result.error;
+
+        } catch (e) {
+
+          console.error('UPDATE THREW EXCEPTION', e);
+
+          return;
+
+        }
 
         console.log('AFTER UPDATE', error);
+
+
+
+
+
 
         if (error) {
           console.error(error);
