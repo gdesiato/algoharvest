@@ -287,8 +287,6 @@ export class ProblemService {
         console.log('BEFORE QUERY TIMESTAMP', Date.now());
 
         
-        
-        
         let error = null;
 
         try {
@@ -322,10 +320,6 @@ export class ProblemService {
         }
 
         console.log('AFTER UPDATE', error);
-
-
-
-
 
 
         if (error) {
